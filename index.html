@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3d6e">
+<title>3x3 Photo Annexure Tool</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#e9edf2;--card:#fff;--pri:#0b3d6e;--acc:#0b78d1;--ok:#1a8f3c;--bad:#c62828;--warn:#b36b00;--txt:#18232f;--mut:#5b6b7b;--line:#d3dae2}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 system-ui,"Segoe UI",Roboto,Arial,sans-serif}
+.top{position:sticky;top:0;z-index:30;background:var(--pri);color:#fff;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px}
+.top h1{font-size:16px;margin:0 auto 0 0;font-weight:700}
+.chip{font-size:11px;padding:2px 8px;border-radius:99px;background:#ffffff26}
+button,.btn{font:inherit;border:0;border-radius:8px;padding:9px 13px;background:var(--acc);color:#fff;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation}
+button:active,.btn:active{filter:brightness(.9)}
+button.sec,.btn.sec{background:#fff;color:var(--pri);border:1px solid var(--line)}
+button.top-b{background:#ffffff1f;color:#fff;padding:8px 11px}
+button.danger{background:var(--bad)}
+.layout{display:flex;gap:12px;align-items:flex-start;padding:10px}
+.panel{width:370px;flex:none;position:sticky;top:58px;max-height:calc(100vh - 68px);overflow:auto;padding-right:2px}
+.preview{flex:1;min-width:0}
+@media(max-width:900px){.layout{flex-direction:column;align-items:stretch}.panel{width:100%;position:static;max-height:none;overflow:visible}.preview{flex:none;width:100%}.top h1{width:100%}}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+summary{cursor:pointer;padding:11px 12px;font-weight:700;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"▾";color:var(--mut)}
+details[open] summary::after{content:"▴"}
+.body{padding:2px 12px 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label{display:block;font-size:12px;color:var(--mut);font-weight:600}
+label.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--txt);font-weight:500;margin-top:8px}
+input[type=text],input[type=number],input[type=date],select,textarea{width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--txt);margin-top:2px}
+textarea{resize:vertical;min-height:58px}
+.full{grid-column:1/-1}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chk-list div{padding:4px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.chk-list div:last-child{border:0}
+.hint{font-size:12px;color:var(--mut);margin:6px 0 0}
+.pv-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;font-size:13px;color:var(--mut)}
+.pv-bar select{width:auto;margin:0}
+#pages{overflow:auto}
+.holder{margin:0 auto 14px;background:#fff;box-shadow:0 2px 10px #0003;overflow:hidden}
+.page{position:relative;width:210mm;height:297mm;background:#fff;color:#000;transform-origin:0 0;font-family:Helvetica,Arial,"Liberation Sans",sans-serif;overflow:hidden}
+.hd,.ft{position:absolute;line-height:1.2}
+.hd .l{position:absolute;left:0;top:0}
+.hd .r{position:absolute;right:0;top:0;text-align:right;font-size:7.5pt}
+.hd b{font-size:10pt;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .s{font-size:8pt;margin-top:.4mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .a{font-size:7.5pt;margin-top:.4mm;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.hd .r div,.ft div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rule{position:absolute;height:0;border-top:.25mm solid #3c3c3c}
+.ft{font-size:7.5pt}
+.slot{position:absolute}
+.ph{position:relative;background:#fff;overflow:hidden;border-style:solid;border-color:#222}
+.ph img{display:block;width:100%;height:100%}
+.badge{position:absolute;left:1.5mm;top:1.5mm;background:#000;color:#fff;font:bold 9pt/6mm Helvetica,Arial,sans-serif;height:6mm;min-width:6mm;text-align:center;padding:0 1mm}
+.cap{text-align:center;line-height:1.2;overflow:hidden;word-break:break-word}
+.cap span{display:block;margin-top:1mm;overflow:hidden}
+.empty .ph{border:.2mm dashed #999}
+.empty .plus{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9aa6b2;font:300 30pt Arial}
+.slot:not(.empty){cursor:pointer}
+.empty{cursor:pointer}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:8px;z-index:90;display:none;max-width:90vw;text-align:center}
+#busy{position:fixed;inset:0;background:#000a;color:#fff;z-index:80;display:none;align-items:center;justify-content:center;font-size:18px;text-align:center;padding:20px}
+dialog{border:0;border-radius:12px;padding:0;width:min(440px,94vw);max-height:92vh}
+dialog::backdrop{background:#0008}
+#dlg .in{padding:14px}
+#dImg{width:100%;max-height:36vh;object-fit:contain;background:#222;border-radius:8px;display:block}
+@media print{
+ @page{size:A4 portrait;margin:0}
+ html,body{background:#fff!important}
+ .top,.panel,.pv-bar,#toast,#busy,dialog{display:none!important}
+ .layout{display:block;padding:0}.preview{display:block}
+ #pages{overflow:visible}
+ .holder{width:210mm!important;height:296.6mm!important;margin:0!important;box-shadow:none!important;page-break-after:always;break-after:page}
+ .holder:last-child{page-break-after:auto;break-after:auto}
+ .page{transform:none!important}
+ .plus{display:none}
+ body:not(.showempty) .empty{visibility:hidden}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>📷 3×3 Photo Annexure</h1>
+  <span class="chip" id="net">Online</span>
+  <span class="chip" id="saved">—</span>
+  <button class="top-b" id="bPrint">🖨 Print</button>
+  <button class="top-b" id="bPdf">📄 PDF</button>
+  <button class="top-b" id="bShare">📤 Share</button>
+  <button class="top-b" id="bSave">💾 Save project</button>
+</div>
+
+<div class="layout">
+  <div class="panel" id="panel">
+    <details open>
+      <summary>1 · Add photos</summary>
+      <div class="body">
+        <div class="row" style="margin-top:4px">
+          <label class="btn" style="color:#fff;font-size:14px">🖼 Gallery / Files / WhatsApp<input id="fGallery" type="file" accept="image/*" multiple hidden></label>
+          <label class="btn sec" style="font-size:14px">📸 Camera<input id="fCamera" type="file" accept="image/*" capture="environment" hidden></label>
+        </div>
+        <p class="hint">Pick many photos at once. On Android, WhatsApp photos are in <b>Gallery → WhatsApp Images</b> or <b>Files → WhatsApp</b>. Desktop: drag &amp; drop or paste (Ctrl+V). Tap any photo in the preview to add its note, rotate, move or delete.</p>
+        <div class="row">
+          <button class="sec" id="bSort">Sort by name</button>
+          <button class="sec danger" style="color:#fff;background:var(--bad)" id="bClear">Remove all photos</button>
+        </div>
+        <p class="hint" id="count"></p>
+      </div>
+    </details>
+    <details open><summary>2 · Report details (header)</summary><div class="body"><div class="grid2" id="metaF"></div></div></details>
+    <details><summary>3 · Page, photo size &amp; margins</summary><div class="body">
+      <div class="row" style="margin-top:4px">
+        <button class="sec" data-preset="70">50 × 70 mm</button>
+        <button class="sec" data-preset="75">50 × 75 mm</button>
+        <button class="sec" id="bResetLay">Reset</button>
+      </div>
+      <div class="grid2" id="layF" style="margin-top:8px"></div>
+    </div></details>
+    <details><summary>4 · Standard notes list</summary><div class="body">
+      <p class="hint" style="margin-top:0">One note per line. These appear in the quick-pick list when you edit a photo.</p>
+      <textarea id="notesTa" style="min-height:160px"></textarea>
+    </div></details>
+    <details open><summary>5 · Layout check</summary><div class="body chk-list" id="checks"></div></details>
+    <details><summary>6 · Project</summary><div class="body">
+      <div class="row" style="margin-top:4px">
+        <button class="sec" id="bNew">New project</button>
+        <label class="btn sec">Open saved project<input id="fLoad" type="file" accept=".json,application/json" hidden></label>
+      </div>
+      <p class="hint">Your work is auto-saved on this device. <b>Save project</b> (top) creates a backup file containing all photos, notes and settings which you can re-open on any device.</p>
+    </div></details>
+  </div>
+
+  <div class="preview">
+    <div class="pv-bar">
+      <span id="pvInfo"></span>
+      <span style="margin-left:auto">Zoom</span>
+      <select id="zoom"><option value="fit">Fit width</option><option value="1">100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select>
+    </div>
+    <div id="pages"></div>
+  </div>
+</div>
+
+<dialog id="dlg"><div class="in">
+  <img id="dImg" alt="">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 2px"><b>Photo No. <span id="dNo"></span></b><span class="hint" id="dOf"></span></div>
+  <label>Note (printed below the photo)<input type="text" id="dNote" maxlength="140" autocomplete="off"></label>
+  <label style="margin-top:8px">Quick pick<select id="dPick"></select></label>
+  <div class="grid2" style="margin-top:8px">
+    <label>Fit<select id="dFit"><option value="">Default</option><option value="cover">Fill (crop)</option><option value="contain">Fit whole</option></select></label>
+    <label>Replace photo<input type="file" id="dRep" accept="image/*"></label>
+  </div>
+  <div class="row">
+    <button class="sec" id="dRotL">⟲ Rotate</button><button class="sec" id="dRotR">⟳ Rotate</button>
+    <button class="sec" id="dMvL">◀ Move earlier</button><button class="sec" id="dMvR">Move later ▶</button>
+  </div>
+  <div class="row" style="justify-content:space-between">
+    <button class="sec" id="dPrev">◀ Prev</button>
+    <button class="danger" id="dDel">🗑 Delete</button>
+    <button class="sec" id="dNext">Next ▶</button>
+  </div>
+  <div class="row"><button id="dDone" style="width:100%;justify-content:center">Done</button></div>
+</div></dialog>
+
+<div id="toast"></div>
+<div id="busy"><div id="busyT">Working…</div></div>
+
+<script>
+"use strict";
+/* ============ Defaults & state ============ */
+const $=s=>document.querySelector(s);
+const MM=96/25.4, PTMM=25.4/72;
+const STD_NOTES=["Front elevation","Rear elevation","Left side elevation","Right side elevation","Overall view of building","Entrance / main gate","Name board / society plate","Road approach / access","Staircase","Terrace / roof slab","Parking area","Plinth level / foundation","Column – cracks observed","Beam – cracks observed","Slab – leakage / seepage observed","Spalling of concrete / exposed reinforcement","Corrosion of reinforcement","Plaster cracks / hairline cracks","Dampness in wall","Seepage in toilet / bathroom","Terrace waterproofing condition","Water tank","Lift machine room","Boundary wall","Living room – internal view","Kitchen","Bedroom","Toilet / bathroom","NDT – rebound hammer test location","NDT – UPV test location","Core cutting location","Cover meter test location","Electrical meter room"];
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const DEF_LAY={pages:2,pw:50,ph:70,mt:20,mb:25,ml:20,mr:20,hgap:10,vgap:4,caph:9,capfs:8,border:0.3,startNo:1,numpos:"badge",fit:"cover",header:true,footer:true,showEmpty:false};
+const mkDef=()=>({meta:{title:"PHOTOGRAPHIC ANNEXURE",reportType:"Structural Audit Report",ref:"",work:"",address:"",inspection:"Section 9F Inspection",date:today(),client:"",preparedBy:""},lay:{...DEF_LAY},notes:[...STD_NOTES],photos:[]});
+let S=mkDef();
+let zoomMode="fit";
+const imgCache=new Map();
+const MAXPH=90;
+
+/* ============ Form generation ============ */
+const F_META=[
+ ["Annexure title","meta.title","text","full"],
+ ["Annexure to","meta.reportType","select",["Structural Audit Report","Valuation Report","Structural Audit & Valuation Report","Other"],"full"],
+ ["Reference / File No.","meta.ref","text","full"],
+ ["Description of work / site","meta.work","text","full"],
+ ["Site address","meta.address","textarea","full"],
+ ["Inspection (e.g. Section 9F)","meta.inspection","text","full"],
+ ["Date of inspection","meta.date","date"],
+ ["Client / Owner","meta.client","text"],
+ ["Prepared by (name, Reg. No.)","meta.preparedBy","text","full"]];
+const F_LAY=[
+ ["Pages (1–10)","lay.pages","number"],["First photo no.","lay.startNo","number"],
+ ["Photo width (mm)","lay.pw","number"],["Photo height (mm)","lay.ph","number"],
+ ["Top margin (mm)","lay.mt","number"],["Bottom margin (mm)","lay.mb","number"],
+ ["Left margin (mm)","lay.ml","number"],["Right margin (mm)","lay.mr","number"],
+ ["Horizontal gap (mm)","lay.hgap","number"],["Vertical gap (mm)","lay.vgap","number"],
+ ["Note box height (mm)","lay.caph","number"],["Note font (pt)","lay.capfs","number"],
+ ["Photo border (mm)","lay.border","number"],
+ ["Number style","lay.numpos","select",[["badge","On photo corner"],["caption","Before the note"]]],
+ ["Photo fit","lay.fit","select",[["cover","Fill (crop to fit)"],["contain","Fit whole photo"]],"full"],
+ ["Show header on every page","lay.header","chk"],["Show footer / page no.","lay.footer","chk"],["Print empty frames","lay.showEmpty","chk"]];
+function buildForm(id,fields){
+  $(id).innerHTML=fields.map(([lab,key,type,a,b])=>{
+    const cls=((type==="select"?b:a)==="full"||type==="chk"||type==="textarea")?" full":"";
+    if(type==="chk")return `<label class="chk full"><input type="checkbox" data-k="${key}"> ${lab}</label>`;
+    if(type==="select")return `<label class="${cls}">${lab}<select data-k="${key}">${a.map(o=>Array.isArray(o)?`<option value="${o[0]}">${o[1]}</option>`:`<option>${esc(o)}</option>`).join("")}</select></label>`;
+    if(type==="textarea")return `<label class="full">${lab}<textarea data-k="${key}"></textarea></label>`;
+    if(type==="number")return `<label>${lab}<input type="number" inputmode="decimal" step="any" data-k="${key}"></label>`;
+    return `<label class="${cls}">${lab}<input type="${type}" data-k="${key}"></label>`;
+  }).join("");
+}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const getP=k=>k.split(".").reduce((o,p)=>o[p],S);
+const setP=(k,v)=>{const a=k.split(".");const l=a.pop();a.reduce((o,p)=>o[p],S)[l]=v};
+function syncForm(){
+  document.querySelectorAll("[data-k]").forEach(el=>{const v=getP(el.dataset.k);if(el.type==="checkbox")el.checked=!!v;else el.value=v});
+  $("#notesTa").value=S.notes.join("\n");
+}
+function bindForm(){
+  document.addEventListener("input",e=>{
+    const el=e.target;if(!el.dataset||!el.dataset.k)return;
+    let v;
+    if(el.type==="checkbox")v=el.checked;
+    else if(el.type==="number"){v=parseFloat(el.value);if(isNaN(v))return}
+    else v=el.value;
+    setP(el.dataset.k,v);render();save();
+  });
+  $("#notesTa").addEventListener("input",e=>{S.notes=e.target.value.split("\n").map(s=>s.trim()).filter(Boolean);save()});
+}
+
+/* ============ Geometry ============ */
+const pagesCount=()=>Math.min(10,Math.max(1,Math.max(Math.round(+S.lay.pages||1),Math.ceil(S.photos.length/9))));
+function geo(){const L=S.lay,cw=210-L.ml-L.mr,tw=3*L.pw+2*L.hgap;return{cw,tw,x0:L.ml+Math.max(0,(cw-tw)/2),rowH:L.ph+L.caph,gridH:3*(L.ph+L.caph)+2*L.vgap}}
+function slotXY(i){const g=geo(),L=S.lay,k=i%9,r=Math.floor(k/3),c=k%3;return{x:g.x0+c*(L.pw+L.hgap),y:L.mt+r*(g.rowH+L.vgap)}}
+const capLines=()=>Math.max(1,Math.floor((S.lay.caph-1)/(S.lay.capfs*PTMM*1.2)+0.02));
+const fmtDate=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(d||"");return m?`${m[3]}/${m[2]}/${m[1]}`:(d||"")};
+function headerLines(){const M=S.meta;return{
+  title:(M.title||"")+(M.reportType&&M.reportType!=="Other"?" – "+M.reportType:""),
+  work:M.work?"Work / Site: "+M.work:"",
+  addr:M.address?"Address: "+M.address.replace(/\s*\n\s*/g,", "):"",
+  right:[M.ref?"Ref No: "+M.ref:"",M.date?"Date: "+fmtDate(M.date):"",M.inspection||"",M.client?"Client: "+M.client:""].filter(Boolean)}}
+
+/* ============ Preview rendering ============ */
+function slotHTML(i){
+  const L=S.lay,{x,y}=slotXY(i),ph=S.photos[i],n=L.startNo+i;
+  const st=`left:${x}mm;top:${y}mm;width:${L.pw}mm`;
+  if(!ph)return `<div class="slot empty" data-i="${i}" style="${st}"><div class="ph" style="width:${L.pw}mm;height:${L.ph}mm"><div class="plus">+</div></div><div class="cap" style="height:${L.caph}mm"></div></div>`;
+  const fit=ph.fit||L.fit;
+  return `<div class="slot" data-i="${i}" draggable="true" style="${st}">
+   <div class="ph" style="width:${L.pw}mm;height:${L.ph}mm;border-width:${L.border}mm;${L.border>0?"":"border:0"}">
+     <img src="${ph.src}" style="object-fit:${fit}" draggable="false" alt="">
+     ${L.numpos==="badge"?`<span class="badge">${n}</span>`:""}
+   </div>
+   <div class="cap" style="height:${L.caph}mm;font-size:${L.capfs}pt"><span style="max-height:${(capLines()*1.2).toFixed(2)}em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${capLines()}">${esc((L.numpos==="caption"?n+". ":"")+ph.note)}</span></div></div>`;
+}
+function pageHTML(p,np){
+  const L=S.lay,M=S.meta,cw=210-L.ml-L.mr,H=headerLines();
+  let h="";
+  if(L.header){
+    const rw=Math.min(62,cw*.36),lw=cw-rw-3;
+    h+=`<div class="hd" style="left:${L.ml}mm;top:5mm;width:${cw}mm"><div class="l" style="width:${lw}mm"><b>${esc(H.title)}</b>${H.work?`<div class="s">${esc(H.work)}</div>`:""}${H.addr?`<div class="a">${esc(H.addr)}</div>`:""}</div><div class="r" style="width:${rw}mm">${H.right.map(t=>`<div>${esc(t)}</div>`).join("")}</div></div><div class="rule" style="left:${L.ml}mm;width:${cw}mm;top:${L.mt-2}mm"></div>`;
+  }
+  if(L.footer){
+    h+=`<div class="rule" style="left:${L.ml}mm;width:${cw}mm;top:${297-L.mb+2}mm"></div><div class="ft" style="left:${L.ml}mm;width:${cw}mm;top:${297-L.mb+3.2}mm"><div style="float:right;max-width:40%">Annexure page ${p+1} of ${np}</div><div>${esc(M.preparedBy?"Prepared by: "+M.preparedBy:"")}</div></div>`;
+  }
+  for(let k=0;k<9;k++)h+=slotHTML(p*9+k);
+  return `<div class="holder"><div class="page">${h}</div></div>`;
+}
+function render(){
+  const np=pagesCount();let h="";
+  for(let p=0;p<np;p++)h+=pageHTML(p,np);
+  $("#pages").innerHTML=h;
+  document.body.classList.toggle("showempty",!!S.lay.showEmpty);
+  applyScale();
+  $("#count").textContent=`${S.photos.length} of ${MAXPH} photos added · ${np} page(s) · capacity ${np*9}`;
+  $("#pvInfo").textContent=`${S.photos.length} photo(s) · ${np} page(s) · A4 portrait`;
+  renderChecks();
+}
+function applyScale(){
+  const avail=$("#pages").clientWidth-4,pxW=210*MM;
+  const s=zoomMode==="fit"?Math.min(1.5,Math.max(.2,avail/pxW)):parseFloat(zoomMode);
+  document.querySelectorAll(".holder").forEach(h=>{h.style.width=pxW*s+"px";h.style.height=297*MM*s+"px";h.firstElementChild.style.transform=`scale(${s})`});
+}
+function renderChecks(){
+  const L=S.lay,g=geo(),out=[],ok=(t)=>out.push("✅ "+t),bad=(t)=>out.push("🚩 "+t),warn=(t)=>out.push("⚠️ "+t);
+  g.tw<=g.cw+0.001?ok(`Width: grid ${g.tw.toFixed(1)} mm fits in ${g.cw.toFixed(1)} mm`):bad(`Width: grid ${g.tw.toFixed(1)} mm is wider than ${g.cw.toFixed(1)} mm available – reduce photo width / gap / margins`);
+  const avH=297-L.mt-L.mb;
+  g.gridH<=avH+0.001?ok(`Height: grid ${g.gridH.toFixed(1)} mm fits in ${avH.toFixed(1)} mm`):bad(`Height: grid ${g.gridH.toFixed(1)} mm exceeds ${avH.toFixed(1)} mm by ${(g.gridH-avH).toFixed(1)} mm – reduce photo height, note box, row gap or margins`);
+  if(L.header)L.mt>=18?ok("Header fits in top margin"):bad("Top margin below 18 mm – header will overlap photos (increase margin or switch header off)");
+  if(L.footer)L.mb>=12?ok("Footer fits in bottom margin"):bad("Bottom margin below 12 mm – footer will overlap (increase margin or switch footer off)");
+  Math.min(L.mt,L.mb,L.ml,L.mr)>=5?ok("Margins ≥ 5 mm (safe for most printers)"):warn("A margin is below 5 mm – some printers may clip the edge");
+  const n=S.photos.length;
+  n?ok(`${n} photo(s) placed on ${pagesCount()} page(s)`):warn("No photos added yet");
+  if(L.pages<Math.ceil(n/9)&&n)warn(`Pages auto-increased to ${pagesCount()} to hold all photos`);
+  const nn=S.photos.filter(p=>!p.note.trim()).length;
+  nn?warn(`${nn} photo(s) have no note`):(n&&ok("All photos have a note"));
+  S.meta.address.trim()?ok("Site address entered"):warn("Site address is empty");
+  S.meta.work.trim()?ok("Work / site description entered"):warn("Work / site description is empty");
+  $("#checks").innerHTML=out.map(t=>`<div>${esc(t)}</div>`).join("");
+}
+
+/* ============ Photos ============ */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("bad image"));i.src=src});
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await loadImg(url),mx=1400,w=img.naturalWidth,h=img.naturalHeight,s=Math.min(1,mx/Math.max(w,h));
+    const c=document.createElement("canvas");c.width=Math.round(w*s);c.height=Math.round(h*s);
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+    return c.toDataURL("image/jpeg",.84);
+  }finally{URL.revokeObjectURL(url)}
+}
+function busy(t){$("#busyT").textContent=t||"";$("#busy").style.display=t?"flex":"none"}
+let tt;function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(tt);tt=setTimeout(()=>e.style.display="none",3500)}
+async function addFiles(files){
+  const arr=[...files].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name));
+  if(!arr.length){toast("No image files found in the selection");return}
+  let room=MAXPH-S.photos.length,skipped=0,failed=0;
+  if(arr.length>room){skipped=arr.length-room;arr.length=Math.max(0,room)}
+  for(let i=0;i<arr.length;i++){
+    busy(`Adding photo ${i+1} of ${arr.length}…`);
+    await new Promise(r=>setTimeout(r,0));
+    try{S.photos.push({id:uid(),src:await shrink(arr[i]),note:"",fit:""})}catch(e){failed++}
+  }
+  busy("");render();save();
+  toast(`${arr.length-failed} photo(s) added`+(skipped?` · ${skipped} skipped (max ${MAXPH})`:"")+(failed?` · ${failed} could not be read (HEIC?)`:""));
+}
+async function rotate(i,dir){
+  const ph=S.photos[i];if(!ph)return;
+  const img=await loadImg(ph.src),c=document.createElement("canvas");c.width=img.naturalHeight;c.height=img.naturalWidth;
+  const x=c.getContext("2d");x.translate(c.width/2,c.height/2);x.rotate(dir*Math.PI/2);x.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);
+  ph.src=c.toDataURL("image/jpeg",.86);imgCache.delete(ph.id);
+}
+
+/* ============ Photo dialog ============ */
+let cur=-1;
+function openDlg(i){
+  cur=i;const ph=S.photos[i];if(!ph)return;
+  $("#dImg").src=ph.src;$("#dNo").textContent=S.lay.startNo+i;$("#dOf").textContent=`${i+1} of ${S.photos.length}`;
+  $("#dNote").value=ph.note;$("#dFit").value=ph.fit||"";
+  $("#dPick").innerHTML='<option value="">— choose a standard note —</option>'+S.notes.map(n=>`<option>${esc(n)}</option>`).join("");
+  $("#dPrev").disabled=i===0;$("#dNext").disabled=i===S.photos.length-1;
+  $("#dMvL").disabled=i===0;$("#dMvR").disabled=i===S.photos.length-1;
+  if(!$("#dlg").open)$("#dlg").showModal();
+}
+function initDlg(){
+  $("#dNote").addEventListener("input",e=>{S.photos[cur].note=e.target.value;render();save()});
+  $("#dNote").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(cur<S.photos.length-1)openDlg(cur+1);else $("#dlg").close()}});
+  $("#dPick").addEventListener("change",e=>{if(!e.target.value)return;$("#dNote").value=e.target.value;S.photos[cur].note=e.target.value;e.target.value="";render();save()});
+  $("#dFit").addEventListener("change",e=>{S.photos[cur].fit=e.target.value;render();save()});
+  $("#dRotL").onclick=async()=>{await rotate(cur,-1);openDlg(cur);render();save()};
+  $("#dRotR").onclick=async()=>{await rotate(cur,1);openDlg(cur);render();save()};
+  const mv=d=>{const j=cur+d;if(j<0||j>=S.photos.length)return;[S.photos[cur],S.photos[j]]=[S.photos[j],S.photos[cur]];render();save();openDlg(j)};
+  $("#dMvL").onclick=()=>mv(-1);$("#dMvR").onclick=()=>mv(1);
+  $("#dPrev").onclick=()=>openDlg(cur-1);$("#dNext").onclick=()=>openDlg(cur+1);
+  $("#dDel").onclick=()=>{if(!confirm("Delete this photo?"))return;S.photos.splice(cur,1);render();save();if(S.photos.length)openDlg(Math.min(cur,S.photos.length-1));else $("#dlg").close()};
+  $("#dDone").onclick=()=>$("#dlg").close();
+  $("#dRep").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;try{S.photos[cur].src=await shrink(f);imgCache.delete(S.photos[cur].id);render();save();openDlg(cur)}catch{toast("Could not read that image")}e.target.value=""});
+}
+
+/* ============ Persistence ============ */
+let saveT;
+function save(){clearTimeout(saveT);saveT=setTimeout(doSave,700)}
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open("photoAnnexureTool",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function kv(mode,k,v){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("kv",mode==="get"?"readonly":"readwrite"),o=t.objectStore("kv"),r=mode==="get"?o.get(k):o.put(v,k);t.oncomplete=()=>res(r.result);t.onerror=()=>rej(t.error)})}
+async function doSave(){
+  try{await kv("put","project",JSON.parse(JSON.stringify(S)));const d=new Date();$("#saved").textContent="Auto-saved "+d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}
+  catch(e){$("#saved").textContent="Auto-save unavailable – use Save project"}
+}
+function adopt(o){
+  const d=mkDef();
+  S={meta:{...d.meta,...(o.meta||{})},lay:{...d.lay,...(o.lay||{})},notes:Array.isArray(o.notes)&&o.notes.length?o.notes:d.notes,
+     photos:(o.photos||[]).filter(p=>p&&p.src).map(p=>({id:p.id||uid(),src:p.src,note:p.note||"",fit:p.fit||""})).slice(0,MAXPH)};
+  imgCache.clear();syncForm();render();
+}
+async function loadSaved(){try{const o=await kv("get","project");if(o)adopt(o)}catch(e){}}
+const slug=s=>(s||"").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,40);
+const baseName=()=>"Photo_Annexure_"+(slug(S.meta.ref)||slug(S.meta.work)||"Site")+"_"+(S.meta.date||today());
+function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000)}
+function saveProject(){
+  const blob=new Blob([JSON.stringify({app:"PhotoAnnexureTool",v:1,...S})],{type:"application/json"});
+  download(blob,baseName()+".json");toast("Project file saved to your Downloads");
+}
+
+/* ============ Mini PDF writer (no libraries needed) ============ */
+const CP1252={0x2013:0x96,0x2014:0x97,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2026:0x85,0x20AC:0x80};
+function toWin(str){let o="";for(const ch of str){const c=ch.charCodeAt(0);if(c<256&&c>=32||c===9)o+=ch;else if(CP1252[c])o+=String.fromCharCode(CP1252[c]);else return null}return o}
+const mctx=document.createElement("canvas").getContext("2d");
+function tw(str,size,bold){mctx.font=(bold?"bold ":"")+"100px Helvetica,Arial,'Liberation Sans',sans-serif";return mctx.measureText(str).width/100*size*PTMM}
+function wrapText(str,size,bold,w,maxLines){
+  const words=str.replace(/\s+/g," ").trim().split(" "),lines=[];let cur="";
+  for(let wd of words){
+    const t=cur?cur+" "+wd:wd;
+    if(tw(t,size,bold)<=w*0.97||!cur){cur=t}else{lines.push(cur);cur=wd}
+    while(tw(cur,size,bold)>w*0.97&&cur.length>1){let k=cur.length;while(k>1&&tw(cur.slice(0,k),size,bold)>w*0.97)k--;lines.push(cur.slice(0,k));cur=cur.slice(k)}
+  }
+  if(cur)lines.push(cur);
+  if(maxLines&&lines.length>maxLines){lines.length=maxLines;let l=lines[maxLines-1];while(l.length>1&&tw(l+"...",size,bold)>w*0.97)l=l.slice(0,-1);lines[maxLines-1]=l+"..."}
+  return lines;
+}
+function MiniPDF(){
+  const pages=[],imgs=[];let pg=null;
+  const f=n=>String(parseFloat((+n).toFixed(3)));
+  const X=x=>f(x/PTMM),Y=y=>f((297-y)/PTMM);
+  const col=(c,s)=>c.map(v=>f(v/255)).join(" ")+(s?" RG":" rg");
+  return{
+    addPage(){pg={ops:[],im:new Set()};pages.push(pg)},
+    text(str,x,yBase,o){ // str must be win-encodable
+      o=o||{};const size=o.size||8,w=tw(str,size,o.bold);
+      let tx=x;if(o.align==="center")tx=x-w/2;else if(o.align==="right")tx=x-w;
+      const esc=toWin(str).replace(/[\\()]/g,m=>"\\"+m);
+      pg.ops.push(`BT /${o.bold?"F2":"F1"} ${f(size)} Tf ${col(o.color||[20,20,20])} ${X(tx)} ${Y(yBase)} Td (${esc}) Tj ET`);
+    },
+    rect(x,y,w,h,o){ // o:{fill,stroke,lw,dash}
+      const a=["q"];if(o.fill)a.push(col(o.fill));if(o.stroke)a.push(col(o.stroke,true));
+      if(o.lw)a.push(f(o.lw/PTMM)+" w");if(o.dash)a.push(`[${f(o.dash/PTMM)} ${f(o.dash/PTMM)}] 0 d`);
+      a.push(`${X(x)} ${Y(y+h)} ${f(w/PTMM)} ${f(h/PTMM)} re ${o.fill&&o.stroke?"B":o.fill?"f":"S"} Q`);pg.ops.push(a.join(" "));
+    },
+    line(x1,y1,x2,y2,lw,c){pg.ops.push(`q ${col(c||[60,60,60],true)} ${f(lw/PTMM)} w ${X(x1)} ${Y(y1)} m ${X(x2)} ${Y(y2)} l S Q`)},
+    image(jpeg,pw,ph,x,y,w,h){ // jpeg: Uint8Array
+      let k=imgs.findIndex(m=>m.d===jpeg);if(k<0){k=imgs.length;imgs.push({d:jpeg,w:pw,h:ph})}
+      pg.im.add(k);pg.ops.push(`q ${f(w/PTMM)} 0 0 ${f(h/PTMM)} ${X(x)} ${Y(y+h)} cm /Im${k} Do Q`);
+    },
+    output(title){
+      const parts=[];let len=0;const offs=[];
+      const push=b=>{if(typeof b==="string"){const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i)&255;b=u}parts.push(b);len+=b.length};
+      const obj=(n,body,stream)=>{offs[n]=len;push(n+" 0 obj\n"+body+"\n");if(stream){push("stream\n");push(stream);push("\nendstream\n")}push("endobj\n")};
+      const ni=imgs.length,np=pages.length,cObj=k=>5+ni+2*k,pObj=k=>6+ni+2*k,info=5+ni+2*np;
+      push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+      obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
+      obj(2,"<< /Type /Pages /Count "+np+" /Kids ["+pages.map((_,k)=>pObj(k)+" 0 R").join(" ")+"] >>");
+      obj(3,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+      obj(4,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+      imgs.forEach((m,i)=>obj(5+i,`<< /Type /XObject /Subtype /Image /Width ${m.w} /Height ${m.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${m.d.length} >>`,m.d));
+      pages.forEach((p,k)=>{
+        const cs=p.ops.join("\n"),cb=new Uint8Array(cs.length);for(let i=0;i<cs.length;i++)cb[i]=cs.charCodeAt(i)&255;
+        obj(cObj(k),`<< /Length ${cb.length} >>`,cb);
+        obj(pObj(k),`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.276 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << ${[...p.im].map(i=>`/Im${i} ${5+i} 0 R`).join(" ")} >> >> /Contents ${cObj(k)} 0 R >>`);
+      });
+      obj(info,`<< /Title (${(title||"Photo Annexure").replace(/[^\x20-\x7E]/g,"").replace(/[\\()]/g,"")}) /Producer (Photo Annexure Tool) >>`);
+      const xr=len,N=info+1;
+      push("xref\n0 "+N+"\n0000000000 65535 f \n");
+      for(let i=1;i<N;i++)push(String(offs[i]).padStart(10,"0")+" 00000 n \n");
+      push(`trailer\n<< /Size ${N} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xr}\n%%EOF`);
+      return new Blob(parts,{type:"application/pdf"});
+    }
+  };
+}
+const dataToBytes=d=>{const b=atob(d.split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+/* text block: native PDF text when Latin, else rendered as picture (Marathi/Hindi/₹ etc.) */
+function drawBlock(pdf,str,x,y,w,o){
+  str=(str||"").trim();if(!str)return 0;
+  const size=o.size||8,lh=size*PTMM*1.2;
+  if(toWin(str)!==null){
+    const lines=wrapText(str,size,o.bold,w,o.maxLines);
+    lines.forEach((ln,j)=>{const by=y+size*PTMM*0.92+j*lh,tx=o.align==="center"?x+w/2:o.align==="right"?x+w:x;pdf.text(ln,tx,by,{size,bold:o.bold,align:o.align})});
+    return lines.length*lh;
+  }
+  const PX=12,fnt=`${o.bold?"bold ":""}${size*PTMM*PX}px Arial,"Noto Sans","Noto Sans Devanagari","Nirmala UI",sans-serif`;
+  const c=document.createElement("canvas"),cx=c.getContext("2d");cx.font=fnt;
+  const words=str.split(/\s+/),lines=[];let cur="";
+  for(const wd of words){const t=cur?cur+" "+wd:wd;if(cx.measureText(t).width<=w*PX*0.97||!cur)cur=t;else{lines.push(cur);cur=wd}}
+  if(cur)lines.push(cur);
+  if(o.maxLines&&lines.length>o.maxLines){lines.length=o.maxLines;lines[o.maxLines-1]=lines[o.maxLines-1].slice(0,-2)+"..."}
+  c.width=Math.round(w*PX);c.height=Math.round(lines.length*lh*PX);
+  cx.fillStyle="#fff";cx.fillRect(0,0,c.width,c.height);cx.fillStyle="#141414";cx.font=fnt;cx.textBaseline="top";
+  cx.textAlign=o.align==="center"?"center":o.align==="right"?"right":"left";
+  const tx=o.align==="center"?c.width/2:o.align==="right"?c.width:0;
+  lines.forEach((ln,j)=>cx.fillText(ln,tx,j*lh*PX+(lh*PX-size*PTMM*PX)/2));
+  pdf.image(dataToBytes(c.toDataURL("image/jpeg",.92)),c.width,c.height,x,y,w,lines.length*lh);
+  return lines.length*lh;
+}
+async function photoJpeg(ph){
+  const L=S.lay,PXMM=11.81,cw=Math.round(L.pw*PXMM),ch=Math.round(L.ph*PXMM);
+  let img=imgCache.get(ph.id);if(!img||img._src!==ph.src){img=await loadImg(ph.src);img._src=ph.src;imgCache.set(ph.id,img)}
+  const c=document.createElement("canvas");c.width=cw;c.height=ch;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cw,ch);
+  const iw=img.naturalWidth,ih=img.naturalHeight,fit=ph.fit||L.fit;
+  const s=fit==="cover"?Math.max(cw/iw,ch/ih):Math.min(cw/iw,ch/ih),dw=iw*s,dh=ih*s;
+  x.imageSmoothingQuality="high";x.drawImage(img,(cw-dw)/2,(ch-dh)/2,dw,dh);
+  return{d:dataToBytes(c.toDataURL("image/jpeg",.9)),w:cw,h:ch};
+}
+async function buildPDF(){
+  const L=S.lay,M=S.meta,np=pagesCount(),pdf=MiniPDF(),g=geo(),H=headerLines(),cw=g.cw;
+  for(let p=0;p<np;p++){
+    busy(`Building PDF… page ${p+1} of ${np}`);await new Promise(r=>setTimeout(r,0));
+    pdf.addPage();
+    if(L.header){
+      const rw=Math.min(62,cw*.36),lw=cw-rw-3;let y=5;
+      y+=drawBlock(pdf,H.title,L.ml,y,lw,{size:10,bold:true,maxLines:1});
+      if(H.work)y+=drawBlock(pdf,H.work,L.ml,y+.4,lw,{size:8,maxLines:1})+.4;
+      if(H.addr)drawBlock(pdf,H.addr,L.ml,y+.4,lw,{size:7.5,maxLines:2});
+      let ry=5;H.right.forEach(t=>{ry+=drawBlock(pdf,t,L.ml+cw-rw,ry,rw,{size:7.5,align:"right",maxLines:1})});
+      pdf.line(L.ml,L.mt-2,L.ml+cw,L.mt-2,.25);
+    }
+    if(L.footer){
+      pdf.line(L.ml,297-L.mb+2,L.ml+cw,297-L.mb+2,.25);
+      drawBlock(pdf,M.preparedBy?"Prepared by: "+M.preparedBy:"",L.ml,297-L.mb+3.2,cw*.6,{size:7.5,maxLines:1});
+      drawBlock(pdf,`Annexure page ${p+1} of ${np}`,L.ml+cw*.6,297-L.mb+3.2,cw*.4,{size:7.5,align:"right",maxLines:1});
+    }
+    for(let k=0;k<9;k++){
+      const i=p*9+k,{x,y}=slotXY(i),ph=S.photos[i];
+      if(!ph){if(L.showEmpty)pdf.rect(x+.1,y+.1,L.pw-.2,L.ph-.2,{stroke:[150,150,150],lw:.2,dash:1});continue}
+      const im=await photoJpeg(ph);
+      pdf.image(im.d,im.w,im.h,x,y,L.pw,L.ph);
+      if(L.border>0)pdf.rect(x+L.border/2,y+L.border/2,L.pw-L.border,L.ph-L.border,{stroke:[34,34,34],lw:L.border});
+      const n=L.startNo+i;
+      if(L.numpos==="badge"){
+        const bw=Math.max(6,2+String(n).length*2.4);
+        pdf.rect(x+1.5,y+1.5,bw,6,{fill:[0,0,0]});
+        pdf.text(String(n),x+1.5+bw/2,y+1.5+6/2+9*PTMM*0.35,{size:9,bold:true,align:"center",color:[255,255,255]});
+      }
+      drawBlock(pdf,(L.numpos==="caption"?n+". ":"")+ph.note,x,y+L.ph+1,L.pw,{size:L.capfs,align:"center",maxLines:capLines()});
+    }
+  }
+  const blob=pdf.output((M.work||"Photo Annexure"));busy("");return blob;
+}
+async function makePDF(){
+  if(!S.photos.length){toast("Add some photos first");return null}
+  try{return await buildPDF()}catch(e){busy("");console.error(e);alert("Could not build the PDF: "+e.message);return null}
+}
+async function doPdf(){const b=await makePDF();if(b){download(b,baseName()+".pdf");toast("PDF created – check your Downloads")}}
+async function doShare(){
+  const b=await makePDF();if(!b)return;
+  const file=new File([b],baseName()+".pdf",{type:"application/pdf"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Photo Annexure",text:(S.meta.work||"")+" "+(S.meta.ref||"")});}
+    else{download(b,file.name);toast("Sharing is not supported on this browser – PDF downloaded instead")}
+  }catch(e){if(e.name!=="AbortError"){download(b,file.name);toast("Could not open share sheet – PDF downloaded instead")}}
+}
+function doPrint(){
+  if(!S.photos.length){toast("Add some photos first");return}
+  const bad=document.querySelector("#checks div")&&[...document.querySelectorAll("#checks div")].some(d=>d.textContent.startsWith("🚩"));
+  if(bad&&!confirm("The Layout check shows a red flag 🚩 – the print may overlap or clip. Print anyway?"))return;
+  window.print();
+}
+
+/* ============ Wiring ============ */
+function init(){
+  buildForm("#metaF",F_META);buildForm("#layF",F_LAY);syncForm();bindForm();initDlg();render();
+  $("#fGallery").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
+  $("#fCamera").addEventListener("change",e=>{addFiles(e.target.files);e.target.value=""});
+  $("#bPrint").onclick=doPrint;$("#bPdf").onclick=doPdf;$("#bShare").onclick=doShare;$("#bSave").onclick=saveProject;
+  $("#bSort").onclick=()=>{toast("Photos keep the order you picked them. Use Move earlier / later inside a photo to reorder.")};
+  $("#bSort").style.display="none";
+  $("#bClear").onclick=()=>{if(S.photos.length&&confirm("Remove ALL photos from this project?")){S.photos=[];render();save()}};
+  $("#bNew").onclick=()=>{if(!confirm("Start a new project? Photos and report details will be cleared (layout settings and notes list are kept). Use 'Save project' first if you need a backup."))return;const k=mkDef();k.lay=S.lay;k.notes=S.notes;k.meta.preparedBy=S.meta.preparedBy;k.meta.title=S.meta.title;S=k;syncForm();render();save()};
+  $("#fLoad").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.photos))throw 0;adopt(o);save();toast("Project opened")}catch{alert("This file is not a valid Photo Annexure project file.")}});
+  document.querySelectorAll("[data-preset]").forEach(b=>b.onclick=()=>{S.lay.pw=50;S.lay.ph=+b.dataset.preset;if(S.lay.ph===75){S.lay.caph=6;S.lay.vgap=2;S.lay.capfs=7}else{S.lay.caph=9;S.lay.vgap=4;S.lay.capfs=8}syncForm();render();save()});
+  $("#bResetLay").onclick=()=>{S.lay={...DEF_LAY};syncForm();render();save()};
+  $("#zoom").onchange=e=>{zoomMode=e.target.value;applyScale()};
+  window.addEventListener("resize",applyScale);
+  /* preview interactions */
+  const pv=$("#pages");let dragI=-1;
+  pv.addEventListener("click",e=>{const s=e.target.closest(".slot");if(!s)return;const i=+s.dataset.i;if(S.photos[i])openDlg(i);else $("#fGallery").click()});
+  pv.addEventListener("dragstart",e=>{const s=e.target.closest(".slot");if(!s)return;dragI=+s.dataset.i;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","slot")});
+  pv.addEventListener("dragover",e=>{e.preventDefault()});
+  pv.addEventListener("drop",e=>{
+    e.preventDefault();
+    if(e.dataTransfer.files&&e.dataTransfer.files.length){addFiles(e.dataTransfer.files);return}
+    const s=e.target.closest(".slot");if(!s||dragI<0)return;const j=Math.min(+s.dataset.i,S.photos.length-1);
+    if(j!==dragI&&S.photos[dragI]){const [m]=S.photos.splice(dragI,1);S.photos.splice(j,0,m);render();save()}dragI=-1;
+  });
+  window.addEventListener("paste",e=>{if(e.clipboardData&&e.clipboardData.files.length&&!/input|textarea/i.test(e.target.tagName))addFiles(e.clipboardData.files)});
+  const net=()=>{$("#net").textContent=navigator.onLine?"Online":"Offline – works fine";};
+  window.addEventListener("online",net);window.addEventListener("offline",net);net();
+  window.addEventListener("beforeunload",()=>{});
+  if(window.innerWidth<900)document.querySelectorAll('details')[4].open=false;
+  loadSaved();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  try{if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register("sw.js")}catch(e){}
+}
+init();
+</script>
+</body>
+</html>
